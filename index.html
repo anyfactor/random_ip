@@ -1,4 +1,4 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
   <title>Random IP Generator</title>
@@ -21,11 +21,11 @@
   </style>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/dark.css">
 </head>
-<body>
-  <h1>Random IP Generator</h1>
+<body onload="generateAndCopy()">
+    <h1>Random IP Generator</h1>
     <label for="numAddresses">Number of IP Addresses:</label>
     <div class="row">
-      <input type="number" id="numAddresses" min="1" value="10">
+      <input type="number" id="numAddresses" min="1" value="1">
       <div id="buttonsContainer">
         <button class="numberButton" onclick="setNumAddresses(10)">10</button>
         <button class="numberButton" onclick="setNumAddresses(50)">50</button>
@@ -185,7 +185,8 @@
         var ipv4 = ipAddress.join('.');
         if (bogonCheck) {
           if (isBogonIpAddress(ipv4)){
-            console.log(`https://ipinfo.io/${ipv4}`)
+            // IP bogon test.
+            // console.log(`https://ipinfo.io/${ipv4}`)
             continue
           }
         }
