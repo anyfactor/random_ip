@@ -1,0 +1,249 @@
+  <!DOCTYPE html>
+<html>
+<head>
+  <title>Random IP Generator</title>
+  <style>
+    .pop {
+      animation: popAnim 0.35s linear;
+    }
+
+    @keyframes popAnim {
+      0% { transform: scale(1); opacity: 1; background-color: red;}
+      50% { transform: scale(1.2); opacity: 0.7; background-color: yellow;}
+      100% { transform: scale(1); opacity: 1; background-color: #1e90ff;}
+    }
+    .row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-start;
+    }
+  </style>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/dark.css">
+</head>
+<body>
+  <h1>Random IP Generator</h1>
+    <label for="numAddresses">Number of IP Addresses:</label>
+    <div class="row">
+      <input type="number" id="numAddresses" min="1" value="10">
+      <div id="buttonsContainer">
+        <button class="numberButton" onclick="setNumAddresses(10)">10</button>
+        <button class="numberButton" onclick="setNumAddresses(50)">50</button>
+        <button class="numberButton" onclick="setNumAddresses(100)">100</button>
+        <button class="numberButton" onclick="setNumAddresses(1000)">1000</button>
+      </div>
+    </div>
+  <br>
+  <div>
+    <input type="radio" id="ipv4" name="ipType" value="ipv4" checked>
+    <label for="ipv4">IPv4</label>
+    <input type="radio" id="ipv6" name="ipType" value="ipv6">
+    <label for="ipv6">IPv6</label>
+    <input type="radio" id="both" name="ipType" value="both">
+    <label for="both">Both</label>
+  </div>
+  <div>
+    <input type="checkbox" id="bogon" name="bogonCheck" value="bogon" checked>
+    <label for="bogon">Remove Bogon IPs</label>
+  </div>
+  <br>
+  <div>
+    <button onclick="generateIPAddresses()" style="background-color: #03C04A;">Generate</button>
+    <button onclick="generateAndCopy()" style="background-color: #0095e5;">Generate + Copy</button>
+  </div>
+  <br>
+  <textarea id="result" readonly></textarea>
+  <br>
+  <div>
+    <button id="copyButton" onclick="copyResult();addPopClass(this)" style="background-color: #f96d6d;" disabled>Copy</button>
+    <button onclick="convertToJSON()" id="jsonButton" style="background-color: #5454c5;" disabled>Convert to JSON</button>
+    <button onclick="clearTextarea()" id="clearButton" disabled>Clear 🧹</button>
+  </div>
+  <div style="text-align:center; margin-top: 50px;">
+     <small>
+        <strike>Created</strike> Prompted by <a href="https://www.twitter.com/anyfactor" target="_blank">anyfactor</a>. Developed using <a href="https://chat.openai.com/" target="_blank">ChatGPT</a>. Styled using <a href="https://watercss.kognise.dev/" target="_blank">Water.css</a>.
+      </small>
+  </div>
+  <script>
+    function isBogonIpAddress(ipAddress) {
+      // IPv4 bogon address ranges
+      const ipv4BogonRanges = [
+        /^0\.0\.0\.([0-9]|[1-9][0-9]|1([0-9][0-9])|2([0-4][0-9]|5[0-5]))$/,
+        /^10\.([0-9]|[1-9][0-9]|1([0-9][0-9])|2([0-4][0-9]|5[0-5]))\.([0-9]|[1-9][0-9]|1([0-9][0-9])|2([0-4][0-9]|5[0-5]))\.([0-9]|[1-9][0-9]|1([0-9][0-9])|2([0-4][0-9]|5[0-5]))$/,
+        /^100\.64\.([0-9]|[1-9][0-9]|1([0-9][0-9])|2([0-4][0-9]|5[0-5]))\.([0-9]|[1-9][0-9]|1([0-9][0-9])|2([0-4][0-9]|5[0-5]))$/,
+        /^127\.0\.0\.1$/,
+        /^127\.0\.53\.53$/,
+        /^169\.254\.([0-9]|[1-9][0-9]|1([0-9][0-9])|2([0-4][0-9]|5[0-5]))\.([0-9]|[1-9][0-9]|1([0-9][0-9])|2([0-4][0-9]|5[0-5]))$/,
+        /^172\.(1[6-9]|2[0-9]|3[0-1])\.([0-9]|[1-9][0-9]|1([0-9][0-9])|2([0-4][0-9]|5[0-5]))\.([0-9]|[1-9][0-9]|1([0-9][0-9])|2([0-4][0-9]|5[0-5]))$/,
+        /^192\.0\.0\.([0-9]|[1-9][0-9]|1([0-9][0-9])|2([0-4][0-9]|5[0-5]))$/,
+        /^192\.0\.2\.([0-9]|[1-9][0-9]|1([0-9][0-9])|2([0-4][0-9]|5[0-5]))$/,
+        /^192\.168\.([0-9]|[1-9][0-9]|1([0-9][0-9])|2([0-4][0-9]|5[0-5]))\.([0-9]|[1-9][0-9]|1([0-9][0-9])|2([0-4][0-9]|5[0-5]))$/,
+        /^198\.(1[8-9]|2[0-9])\.([0-9]|[1-9][0-9]|1([0-9][0-9])|2([0-4][0-9]|5[0-5]))\.([0-9]|[1-9][0-9]|1([0-9][0-9])|2([0-4][0-9]|5[0-5]))$/,
+        /^198\.51\.100\.([0-9]|[1-9][0-9]|1([0-9][0-9])|2([0-4][0-9]|5[0-5]))$/,
+        /^203\.0\.113\.([0-9]|[1-9][0-9]|1([0-9][0-9])|2([0-4][0-9]|5[0-5]))$/,
+        /^22[4-9]\.([0-9]|[1-9][0-9]|1([0-9][0-9])|2([0-4][0-9]|5[0-5]))\.([0-9]|[1-9][0-9]|1([0-9][0-9])|2([0-4][0-9]|5[0-5]))\.([0-9]|[1-9][0-9]|1([0-9][0-9])|2([0-4][0-9]|5[0-5]))$/,
+        /^240\.([0-9]|[1-9][0-9]|1([0-9][0-9])|2([0-4][0-9]|5[0-5]))\.([0-9]|[1-9][0-9]|1([0-9][0-9])|2([0-4][0-9]|5[0-5]))\.([0-9]|[1-9][0-9]|1([0-9][0-9])|2([0-4][0-9]|5[0-5]))$/,
+        /^255\.255\.255\.255$/
+      ];
+
+      // IPv6 bogon address ranges
+      const ipv6BogonRanges = [
+        /^::1$/,
+        /^::ffff:(0:){0,1}\/96$/,
+        /^::ffff:0:0:(0:){0,1}\/96$/,
+        /^64:(:ffff){0,1}::\/96$/,
+        /^100::\/64$/,
+        /^2001:10::\/28$/,
+        /^2001:db8::\/32$/,
+        /^fc00::\/7$/,
+        /^fe80::\/10$/,
+        /^ff00::\/8$/
+      ];
+
+      const isIPv4 = ipAddress.includes('.');
+      const isIPv6 = ipAddress.includes(':');
+
+      if (isIPv4) {
+        return ipv4BogonRanges.some(regex => regex.test(ipAddress));
+      }
+
+      if (isIPv6) {
+        return ipv6BogonRanges.some(regex => regex.test(ipAddress));
+      }
+
+      return false;
+    }
+    function clearTextarea() {
+      var ipList = document.getElementById('result');
+      ipList.value = '';      
+      updateClearButtonState();
+      updateJSONButton(true);
+    }
+    
+    function updateClearButtonState() {
+      var ipList = document.getElementById('result');
+      var clearButton = document.getElementById('clearButton');
+      var copyButton = document.getElementById('copyButton');
+      copyButton.disabled = clearButton.disabled = ipList.value === '';
+    }
+
+    function updateJSONButton(status) {
+      var jsonButton = document.getElementById('jsonButton');
+      jsonButton.disabled = status;
+    }
+    updateJSONButton(true)
+
+    var ipList = document.getElementById('result');
+    
+
+    function addPopClass(element) {
+      element.classList.add('pop');
+      
+      // Remove the pop class after the animation ends
+      setTimeout(function() {
+        element.classList.remove('pop');
+      }, 300);
+    }
+    
+    function generateIPAddresses() {
+      var numAddresses = parseInt(document.getElementById('numAddresses').value);
+      var isIPv4 = document.getElementById('ipv4').checked;
+      var isIPv6 = document.getElementById('ipv6').checked;
+      var ipAddresses = [];
+
+      for (var i = 0; i < numAddresses; i++) {
+        var ipAddress = '';
+        if (isIPv4) {
+          ipAddress = generateIPv4Address();
+        } else if (isIPv6) {
+          ipAddress = generateIPv6Address();
+        } else {
+          ipAddress = Math.random() < 0.5 ? generateIPv4Address() : generateIPv6Address();
+        }
+        ipAddresses.push(ipAddress);
+      }
+      
+      document.getElementById('result').value = ipAddresses.join('\n');
+      updateClearButtonState();
+      updateJSONButton(false);
+    }
+
+    function generateAndCopy() {
+      generateIPAddresses();
+      updateClearButtonState();
+      copyResult();
+      updateJSONButton(false);
+    }
+
+    function generateIPv4Address() {
+      bogonCheck = document.getElementById('bogon').checked
+      while (true) {
+        var ipAddress = [];
+        for (var j = 0; j < 4; j++) {
+          ipAddress.push(Math.floor(Math.random() * 256));
+        }
+        var ipv4 = ipAddress.join('.');
+        if (bogonCheck) {
+          if (isBogonIpAddress(ipv4)){
+            console.log(`https://ipinfo.io/${ipv4}`)
+            continue
+          }
+        }
+        return ipv4;
+      }
+    }
+
+    function generateIPv6Address() {
+      bogonCheck = document.getElementById('bogon').checked
+      while (true) {
+        var ipAddress = [];
+        for (var j = 0; j < 8; j++) {
+          var block = '';
+          for (var k = 0; k < 4; k++) {
+            block += Math.floor(Math.random() * 16).toString(16);
+          }
+          ipAddress.push(block);
+        }
+        var ipv6 = ipAddress.join(':');
+        if (bogonCheck) {
+          if (isBogonIpAddress(ipv6)){
+            continue
+          }
+        }
+        return ipv6;
+      }
+    }
+
+    function copyResult() {
+      var resultTextarea = document.getElementById('result');
+      resultTextarea.select();
+      document.execCommand('copy');
+    }
+
+    function setNumAddresses(num) {
+      document.getElementById('numAddresses').value = num;
+    }
+
+    function convertToJSON() {
+      var resultTextarea = document.getElementById('result');
+      if (resultTextarea.value && !resultTextarea.value.includes("]")) {
+        var ipAddresses = resultTextarea.value.split('\n');
+        var json = JSON.stringify(ipAddresses);
+        resultTextarea.value = json;
+        updateJSONButton(true);
+      }
+      
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      var numAddressesInput = document.getElementById('numAddresses');
+      numAddressesInput.addEventListener('keyup', function(event) {
+        if (event.keyCode === 13) {
+          event.preventDefault();
+          generateIPAddresses();
+        }
+      });
+    });
+  </script>
+</body>
+</html>
