@@ -50,14 +50,17 @@
   <div>
     <button onclick="generateIPAddresses()" style="background-color: #03C04A;">Generate</button>
     <button onclick="generateAndCopy()" style="background-color: #0095e5;">Generate + Copy</button>
+    <button id="copyButton" onclick="copyResult();addPopClass(this)" style="background-color: #f96d6d;" disabled>Copy</button>
+    <button onclick="clearTextarea()" id="clearButton" disabled>Clear 🧹</button>
   </div>
   <br>
   <textarea id="result" readonly></textarea>
   <br>
   <div>
-    <button id="copyButton" onclick="copyResult();addPopClass(this)" style="background-color: #f96d6d;" disabled>Copy</button>
-    <button onclick="convertToJSON()" id="jsonButton" style="background-color: #5454c5;" disabled>Convert to JSON</button>
-    <button onclick="clearTextarea()" id="clearButton" disabled>Clear 🧹</button>
+    <h3>Convert to:</h3>
+    <button onclick="convertToJSON()" id="jsonButton" style="background-color: #C46859;" disabled>JSON</button>
+    <button onclick="convertToSnowflake()" id="snowflakeButton" style="background-color: #4D4DFF;" disabled>Snowflake</button>
+    <button onclick="convertToBigquery()" id="bigqueryButton" style="background-color: #D6622D;" disabled>BigQuery</button>
   </div>
   <div style="text-align:center; margin-top: 50px;">
      <small>
@@ -110,7 +113,6 @@
       if (isIPv6) {
         return ipv6BogonRanges.some(regex => regex.test(ipAddress));
       }
-
       return false;
     }
     function clearTextarea() {
@@ -118,6 +120,8 @@
       ipList.value = '';      
       updateClearButtonState();
       updateJSONButton(true);
+      updateSnowflakeButton(true);
+      updateBigqueryButton(true);
     }
     
     function updateClearButtonState() {
@@ -132,6 +136,18 @@
       jsonButton.disabled = status;
     }
     updateJSONButton(true)
+
+    function updateSnowflakeButton(status) {
+      var snowflakeButton = document.getElementById('snowflakeButton');
+      snowflakeButton.disabled = status;
+    }
+    updateSnowflakeButton(true)
+
+    function updateBigqueryButton(status) {
+      var bigqueryButton = document.getElementById('bigqueryButton');
+      bigqueryButton.disabled = status;
+    }
+    updateBigqueryButton(true)
 
     var ipList = document.getElementById('result');
     
@@ -166,6 +182,8 @@
       document.getElementById('result').value = ipAddresses.join('\n');
       updateClearButtonState();
       updateJSONButton(false);
+      updateSnowflakeButton(false);
+      updateBigqueryButton(false);
     }
 
     function generateAndCopy() {
@@ -173,6 +191,8 @@
       updateClearButtonState();
       copyResult();
       updateJSONButton(false);
+      updateSnowflakeButton(false);
+      updateBigqueryButton(false);
     }
 
     function generateIPv4Address() {
@@ -227,13 +247,55 @@
 
     function convertToJSON() {
       var resultTextarea = document.getElementById('result');
-      if (resultTextarea.value && !resultTextarea.value.includes("]")) {
+      if (resultTextarea.value && !resultTextarea.value.includes("]") && !resultTextarea.value.includes("VALUES") && !resultTextarea.value.includes("UNNEST")) {
         var ipAddresses = resultTextarea.value.split('\n');
         var json = JSON.stringify(ipAddresses);
         resultTextarea.value = json;
         updateJSONButton(true);
+        updateSnowflakeButton(true);
+        updateBigqueryButton(true);
       }
-      
+    }
+
+
+    function convertToSnowflake() {
+      var resultTextarea = document.getElementById('result');
+      if (resultTextarea.value && !resultTextarea.value.includes("VALUES") && !resultTextarea.value.includes("]") && !resultTextarea.value.includes("UNNEST")) {
+        var ipAddresses = resultTextarea.value.split('\n');
+        var ip_text = ipAddresses.join("'),\n                ('")
+        var snowflake_sql = `WITH logs (ip) AS (
+            SELECT *
+            FROM 
+            (VALUES
+                ('${ip_text}')
+            )
+        )`
+        
+        resultTextarea.value = snowflake_sql;
+        updateSnowflakeButton(true);
+        updateJSONButton(true);
+        updateBigqueryButton(true);
+      }
+    }
+
+
+
+    function convertToBigquery() {
+      var resultTextarea = document.getElementById('result');
+      if (resultTextarea.value && !resultTextarea.value.includes("VALUES") && !resultTextarea.value.includes("]" && !resultTextarea.value.includes("UNNEST"))) {
+        var ipAddresses = resultTextarea.value.split('\n');
+        var ip_text = JSON.stringify(ipAddresses).replace(/"/g, "'")
+        var bigquery_sql = `WITH log_data AS (
+            SELECT *
+            FROM  UNNEST(${ip_text})
+            AS IP
+        )`
+        
+        resultTextarea.value = bigquery_sql;
+        updateSnowflakeButton(true);
+        updateJSONButton(true);
+        updateBigqueryButton(true);
+      }
     }
 
     document.addEventListener('DOMContentLoaded', function() {
