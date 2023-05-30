@@ -61,6 +61,7 @@
     <button onclick="convertToJSON()" id="jsonButton" style="background-color: #C46859;" disabled>JSON</button>
     <button onclick="convertToSnowflake()" id="snowflakeButton" style="background-color: #4D4DFF;" disabled>Snowflake</button>
     <button onclick="convertToBigquery()" id="bigqueryButton" style="background-color: #D6622D;" disabled>BigQuery</button>
+    <button onclick="convertToInteger()" id="integerButton" style="background-color: #C46859;" disabled>Integer</button>
   </div>
   <div style="text-align:center; margin-top: 50px;">
      <small>
@@ -122,6 +123,7 @@
       updateJSONButton(true);
       updateSnowflakeButton(true);
       updateBigqueryButton(true);
+      updateIntegerButton(true);
     }
     
     function updateClearButtonState() {
@@ -148,6 +150,13 @@
       bigqueryButton.disabled = status;
     }
     updateBigqueryButton(true)
+
+
+    function updateIntegerButton(status) {
+      var integerButton = document.getElementById('integerButton');
+      integerButton.disabled = status;
+    }
+    updateIntegerButton(true)
 
     var ipList = document.getElementById('result');
     
@@ -184,6 +193,7 @@
       updateJSONButton(false);
       updateSnowflakeButton(false);
       updateBigqueryButton(false);
+      updateIntegerButton(false);
     }
 
     function generateAndCopy() {
@@ -193,6 +203,7 @@
       updateJSONButton(false);
       updateSnowflakeButton(false);
       updateBigqueryButton(false);
+      updateIntegerButton(false);
     }
 
     function generateIPv4Address() {
@@ -254,6 +265,7 @@
         updateJSONButton(true);
         updateSnowflakeButton(true);
         updateBigqueryButton(true);
+        updateIntegerButton(true);
       }
     }
 
@@ -270,11 +282,12 @@
                 ('${ip_text}')
             )
         )`
-        
+
         resultTextarea.value = snowflake_sql;
         updateSnowflakeButton(true);
         updateJSONButton(true);
         updateBigqueryButton(true);
+        updateIntegerButton(true);
       }
     }
 
@@ -282,7 +295,7 @@
 
     function convertToBigquery() {
       var resultTextarea = document.getElementById('result');
-      if (resultTextarea.value && !resultTextarea.value.includes("VALUES") && !resultTextarea.value.includes("]" && !resultTextarea.value.includes("UNNEST"))) {
+      if (resultTextarea.value && !resultTextarea.value.includes("VALUES") && !resultTextarea.value.includes("]") && !resultTextarea.value.includes("UNNEST")) {
         var ipAddresses = resultTextarea.value.split('\n');
         var ip_text = JSON.stringify(ipAddresses).replace(/"/g, "'")
         var bigquery_sql = `WITH log_data AS (
@@ -295,6 +308,32 @@
         updateSnowflakeButton(true);
         updateJSONButton(true);
         updateBigqueryButton(true);
+        updateIntegerButton(true);
+      }
+    }
+    function convertToInteger() {
+      var resultTextarea = document.getElementById('result');
+      if (resultTextarea.value && !resultTextarea.value.includes("VALUES") && !resultTextarea.value.includes("]") && !resultTextarea.value.includes("UNNEST")) {
+        var ipAddresses = resultTextarea.value.split('\n');
+        integerIPs = []
+        ipAddresses.forEach(ipAddress => {
+          var integerEquivalent = "";
+            // Check if IPv4 format
+            if (ipAddress.includes(".")) {
+              integerEquivalent = ipAddress.split('.').reduce(function(ipInt, octet) { return (ipInt<<8) + parseInt(octet, 10)}, 0) >>> 0;
+            }
+            // Check if IPv6 format
+            else if (ipAddress.includes(":")) {
+              integerEquivalent = ipAddress.split(':').map(str => Number('0x'+str)).reduce(function(int, value) { return BigInt(int) * BigInt(65536) + BigInt(+value) })
+            }
+            integerIPs.push(integerEquivalent)
+        });
+        
+        resultTextarea.value = integerIPs.join("\n")
+        updateSnowflakeButton(true);
+        updateJSONButton(true);
+        updateBigqueryButton(true);
+        updateIntegerButton(true);
       }
     }
 
