@@ -61,6 +61,7 @@
     <button onclick="convertToJSON()" id="jsonButton" style="background-color: #C46859;" disabled>JSON</button>
     <button onclick="convertToSnowflake()" id="snowflakeButton" style="background-color: #4D4DFF;" disabled>Snowflake</button>
     <button onclick="convertToBigquery()" id="bigqueryButton" style="background-color: #D6622D;" disabled>BigQuery</button>
+    <button onclick="convertToPostgres()" id="postgresButton" style="background-color: #4D4DFF;" disabled>PostgreSQL</button>
     <button onclick="convertToInteger()" id="integerButton" style="background-color: #C46859;" disabled>Integer</button>
   </div>
   <div style="text-align:center; margin-top: 50px;">
@@ -122,6 +123,7 @@
       updateClearButtonState();
       updateJSONButton(true);
       updateSnowflakeButton(true);
+      updatePostgresButton(true);
       updateBigqueryButton(true);
       updateIntegerButton(true);
     }
@@ -144,6 +146,12 @@
       snowflakeButton.disabled = status;
     }
     updateSnowflakeButton(true)
+
+    function updatePostgresButton(status) {
+      var postgresButton = document.getElementById('postgresButton');
+      postgresButton.disabled = status;
+    }
+    updatePostgresButton(true)
 
     function updateBigqueryButton(status) {
       var bigqueryButton = document.getElementById('bigqueryButton');
@@ -192,6 +200,7 @@
       updateClearButtonState();
       updateJSONButton(false);
       updateSnowflakeButton(false);
+      updatePostgresButton(false);
       updateBigqueryButton(false);
       updateIntegerButton(false);
     }
@@ -202,6 +211,7 @@
       copyResult();
       updateJSONButton(false);
       updateSnowflakeButton(false);
+      updatePostgresButton(false);
       updateBigqueryButton(false);
       updateIntegerButton(false);
     }
@@ -264,6 +274,7 @@
         resultTextarea.value = json;
         updateJSONButton(true);
         updateSnowflakeButton(true);
+        updatePostgresButton(true);
         updateBigqueryButton(true);
         updateIntegerButton(true);
       }
@@ -274,23 +285,31 @@
       var resultTextarea = document.getElementById('result');
       if (resultTextarea.value && !resultTextarea.value.includes("VALUES") && !resultTextarea.value.includes("]") && !resultTextarea.value.includes("UNNEST")) {
         var ipAddresses = resultTextarea.value.split('\n');
-        var ip_text = ipAddresses.join("'),\n                ('")
-        var snowflake_sql = `WITH logs (ip) AS (
-            SELECT *
-            FROM 
-            (VALUES
-                ('${ip_text}')
-            )
-        )`
-
+        var ip_text = ipAddresses.join("'),\n        ('")
+        var snowflake_sql = `WITH logs (ip) AS (\n    SELECT *\n    FROM\n    (VALUES\n        ('${ip_text}')\n    )\n)`
         resultTextarea.value = snowflake_sql;
         updateSnowflakeButton(true);
+        updatePostgresButton(true);
         updateJSONButton(true);
         updateBigqueryButton(true);
         updateIntegerButton(true);
       }
     }
-
+  
+    function convertToPostgres() {
+      var resultTextarea = document.getElementById('result');
+      if (resultTextarea.value && !resultTextarea.value.includes("VALUES") && !resultTextarea.value.includes("]") && !resultTextarea.value.includes("UNNEST")) {
+        var ipAddresses = resultTextarea.value.split('\n');
+        var ip_text = ipAddresses.join("'),\n        ('")
+        var postgres_sql = `WITH logs (ip) AS (\n    (VALUES\n        ('${ip_text}')\n    )\n)`
+        resultTextarea.value = postgres_sql;
+        updateSnowflakeButton(true);
+        updatePostgresButton(true);
+        updateJSONButton(true);
+        updateBigqueryButton(true);
+        updateIntegerButton(true);
+      }
+    }
 
 
     function convertToBigquery() {
@@ -306,11 +325,13 @@
         
         resultTextarea.value = bigquery_sql;
         updateSnowflakeButton(true);
+        updatePostgresButton(true);
         updateJSONButton(true);
         updateBigqueryButton(true);
         updateIntegerButton(true);
       }
     }
+
     function convertToInteger() {
       var resultTextarea = document.getElementById('result');
       if (resultTextarea.value && !resultTextarea.value.includes("VALUES") && !resultTextarea.value.includes("]") && !resultTextarea.value.includes("UNNEST")) {
@@ -331,6 +352,7 @@
         
         resultTextarea.value = integerIPs.join("\n")
         updateSnowflakeButton(true);
+        updatePostgresButton(true);
         updateJSONButton(true);
         updateBigqueryButton(true);
         updateIntegerButton(true);
